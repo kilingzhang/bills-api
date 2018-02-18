@@ -28,6 +28,7 @@ $app = new Laravel\Lumen\Application(
 );
 
 
+
 $app->withFacades();
 
 $app->withEloquent();
@@ -66,12 +67,14 @@ $app->singleton(
 
 
 $app->middleware([
-    'auth' => \App\Http\Middleware\AuthMiddleware::class,
+
 ]);
 
 $app->routeMiddleware([
-    'cors' => \Barryvdh\Cors\HandleCors::class,
+    'cors' => palanik\lumen\Middleware\LumenCors::class,
+    'auth' => App\Http\Middleware\AuthMiddleware::class,
 ]);
+
 
 
 /*
@@ -105,7 +108,7 @@ $app->router->group(['namespace' => 'App\Http\Controllers',], function ($router)
     require __DIR__ . '/../routes/web.php';
 });
 
-$app->router->group(['namespace' => 'App\Http\Controllers\Api',], function ($router) {
+$app->router->group(['namespace' => 'App\Http\Controllers',], function ($router) {
     require __DIR__ . '/../routes/api.php';
 });
 
