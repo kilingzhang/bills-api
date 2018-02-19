@@ -41,5 +41,11 @@
   "prefer-stable": true,
   "config": {
     "optimize-autoloader": true
+  },
+  "repositories": {
+    "packagist": {
+      "type": "composer",
+      "url": "https://packagist.phpcomposer.com"
+    }
   }
 }

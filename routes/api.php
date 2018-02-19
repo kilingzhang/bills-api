@@ -38,10 +38,10 @@ $router->group(['prefix' => 'api', 'middleware' => ['cors','auth']], function ()
         $router->post('', 'BillController@store');
         $router->put('{id}', 'BillController@update');
         $router->delete('{id}', 'BillController@destroy');
-
     });
 
     $router->get('customers/{customerId}/bills','BillController@showCustomerBills');
+    $router->delete('customers/{customerId}/bills','BillController@destroyThree');
 
 
 });

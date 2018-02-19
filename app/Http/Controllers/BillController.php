@@ -53,7 +53,7 @@ class BillController extends BaseController
         $rules = [
             'page' => 'required|int',
             'limit' => 'required|int',
-            'start' => 'required|date',
+            'start' => 'date',
             'end' => 'date',
         ];
         $this->validate($request, $rules);
@@ -64,29 +64,38 @@ class BillController extends BaseController
         $start = $request->input('start');
         $end = $request->input('end');
 
+        $dateDuring = date('Y-m', strtotime('-3 month')) . '-' . date('Y-m', strtotime('-1 month'));
 
         $customer = Customer::findOrFail($customerId);
 
 
+        $start = $start ?? '2016-01-01';
         $end = $end ?? $start;
+
+
 
         $count = DB::table('bills')
             ->where('deleted_at', null)
-            ->whereDate('created_at', '>=' , $start)
+            ->whereDate('created_at', '>=', $start)
             ->whereDate('created_at', '<=', $end)
-            ->where('customer_id',$customerId)
+            ->where('customer_id', $customerId)
             ->count();
 
         $bills = DB::table('bills')
-            ->where('deleted_at', null)
-            ->whereDate('created_at', '>=' , $start)
-            ->whereDate('created_at', '<=', $end)
-            ->where('customer_id',$customerId)
+            ->select('bills.id as id', 'bills.name as name', 'customers.name as customer_name', 'bills.remark as remark', 'amount', 'bills.created_at')
+            ->leftJoin('customers', 'customers.id', '=', 'bills.customer_id')
+            ->where('bills.deleted_at', null)
+            ->whereDate('bills.created_at', '>=', $start)
+            ->whereDate('bills.created_at', '<=', $end)
+            ->where('bills.customer_id', $customerId)
+            ->orderByRaw('bills_bills.created_at DESC')
             ->offset(($page - 1) * $limit)
             ->limit($limit)
             ->get();
+
         return [
-            'total'=>$count,
+            'date' => $dateDuring,
+            'total' => $count,
             'customer' => $customer,
             'bills' => $bills
         ];
@@ -97,7 +106,7 @@ class BillController extends BaseController
         $rules = [
             'page' => 'required|int',
             'limit' => 'required|int',
-            'start' => 'required|date',
+            'start' => 'date',
             'end' => 'date',
         ];
         $this->validate($request, $rules);
@@ -108,23 +117,31 @@ class BillController extends BaseController
         $start = $request->input('start');
         $end = $request->input('end');
 
+        $dateDuring = date('Y-m', strtotime('-3 month')) . '-' . date('Y-m', strtotime('-1 month'));
+
+        $start = $start ?? '2016-01-01';
         $end = $end ?? $start;
+
 
         $count = DB::table('bills')
             ->where('deleted_at', null)
-            ->whereDate('created_at', '>=' , $start)
+            ->whereDate('created_at', '>=', $start)
             ->whereDate('created_at', '<=', $end)
             ->count();
 
         $bills = DB::table('bills')
-            ->where('deleted_at', null)
-            ->whereDate('created_at', '>=' , $start)
-            ->whereDate('created_at', '<=', $end)
+            ->select('bills.id as id', 'bills.name as name', 'customers.name as customer_name', 'bills.remark as remark', 'amount', 'bills.created_at')
+            ->leftJoin('customers', 'customers.id', '=', 'bills.customer_id')
+            ->where('bills.deleted_at', null)
+            ->whereDate('bills.created_at', '>=', $start)
+            ->whereDate('bills.created_at', '<=', $end)
+            ->orderByRaw('bills_bills.created_at DESC')
             ->offset(($page - 1) * $limit)
             ->limit($limit)
             ->get();
         return [
-            'total'=>$count,
+            'date' => $dateDuring,
+            'total' => $count,
             'customer' => '',
             'bills' => $bills
         ];
@@ -156,6 +173,7 @@ class BillController extends BaseController
             'remark' => 'required|string',
         ];
 
+
         $this->validate($request, $rules);
 
         $bill = Bill::findOrFail($id);
@@ -178,5 +196,36 @@ class BillController extends BaseController
     {
         //
         return Bill::destroy($id);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyThree(Request $request, $customerId)
+    {
+        //
+
+
+        $beginDate = date('Y-m-01 00:00:00', strtotime(date("Y-m-d") . '-3 month'));
+        $firstDate = date('Y-m-01 00:00:00', strtotime(date("Y-m-d") . '-1 month'));
+        $endDate = date('Y-m-d 23:59:59', strtotime("$firstDate +1 month -1 day"));
+
+        $bills = DB::table('bills')
+            ->where('deleted_at', null)
+            ->whereDate('created_at', '>=', $beginDate)
+            ->whereDate('created_at', '<=', $endDate);
+        if (!empty($customerId) && $customerId != 'undefined') {
+            $bills->where('customer_id', $customerId);
+        }
+        $bills = $bills
+            ->pluck('id');
+
+        $bills_ids = json_decode(json_encode($bills), true);
+
+        return Bill::destroy($bills_ids);
+
     }
 }

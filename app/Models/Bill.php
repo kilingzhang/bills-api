@@ -33,4 +33,7 @@ class Bill extends Model
     protected $hidden = [
         'deleted_at',
     ];
+
+
+
 }

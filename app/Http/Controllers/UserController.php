@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends BaseController
 {
@@ -32,8 +32,8 @@ class UserController extends BaseController
         $password = $request->input('password');
 
 
-        if($username !== $password){
-            return response('Unauthorized',401);
+        if ($username !== $password) {
+            return response('Unauthorized', 401);
         }
 
         $key = 'login_token_' . $username;
@@ -45,6 +45,8 @@ class UserController extends BaseController
             $expiresAt = Carbon::now()->addDay(1);
             Cache::put($key, $token, $expiresAt);
         }
+
+
 
         return Response([
             'code' => 0,
@@ -75,9 +77,49 @@ class UserController extends BaseController
     public function show()
     {
         //
-        return [
-            'code' => 0
+        $date = date('Y-m-d', time());
+
+        $amount['count'] = DB::table('bills')
+            ->where('deleted_at', null)
+            ->whereDate('created_at', $date)
+            ->pluck('amount')
+            ->sum();
+
+
+
+        $bills['count'] = DB::table('bills')
+            ->where('deleted_at', null)
+            ->whereDate('created_at', $date)
+            ->pluck('id')
+            ->count();
+
+        $bills['data'] = DB::table('bills')
+            ->where('deleted_at', null)
+            ->whereDate('created_at', $date)
+            ->pluck('id');
+
+        $customers['count'] = DB::table('bills')
+            ->where('deleted_at', null)
+            ->whereDate('created_at', $date)
+            ->groupBy('customer_id')
+            ->pluck('customer_id')
+            ->count();
+
+        $customers['data'] = DB::table('bills')
+            ->where('deleted_at', null)
+            ->whereDate('created_at', $date)
+            ->groupBy('customer_id')
+            ->pluck('customer_id');
+
+
+        $data = [
+            'code' => 0,
+            'amount' =>$amount,
+            'customers' => $customers,
+            'bills' => $bills,
         ];
+
+        return $data;
     }
 
     /**
