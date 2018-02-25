@@ -81,6 +81,12 @@ class BillController extends BaseController
             ->where('customer_id', $customerId)
             ->count();
 
+
+        $amount = DB::table('bills')
+            ->where('deleted_at', null)
+            ->where('customer_id', $customerId)
+            ->sum("amount");
+
         $bills = DB::table('bills')
             ->select('bills.id as id', 'bills.name as name', 'customers.name as customer_name', 'bills.remark as remark', 'amount', 'bills.created_at')
             ->leftJoin('customers', 'customers.id', '=', 'bills.customer_id')
@@ -96,6 +102,7 @@ class BillController extends BaseController
         return [
             'date' => $dateDuring,
             'total' => $count,
+            'amount'=>$amount,
             'customer' => $customer,
             'bills' => $bills
         ];
@@ -128,6 +135,8 @@ class BillController extends BaseController
             ->whereDate('created_at', '>=', $start)
             ->whereDate('created_at', '<=', $end)
             ->count();
+
+
 
         $bills = DB::table('bills')
             ->select('bills.id as id', 'bills.name as name', 'customers.name as customer_name', 'bills.remark as remark', 'amount', 'bills.created_at')
